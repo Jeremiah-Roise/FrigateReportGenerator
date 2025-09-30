@@ -1,0 +1,76 @@
+
+\documentclass{article}
+\usepackage[letterpaper]{geometry}
+\marginsize{0.7in}{0.7in}{-0.3in}{0.25in}
+\usepackage{longtable}
+\usepackage{xcolor}
+\renewcommand{\familydefault}{\ttdefault}
+
+\newcounter{linenum}
+\newcommand{\lineitem}[5]{%
+    % #1 = SKU, #2 = Description, #3 = Unit Rate, #4 = Count, #5 = Amount
+    \stepcounter{linenum}%
+    \thelinenum & #1 & #2 & & #3 & #4 & #5\\
+}
+
+\begin{document}
+% Header
+\noindent
+\begin{tabular}[t]{@{}l@{}}
+
+\textbf{Roise Home Security Report} \\
+
+\begin{tabular}[t]{l@{}l}
+
+Date: & Y\VAR{year} M\VAR{month} D\VAR{day}\\
+Admin: & JeremiahRoise@outlook.com\\
+
+\end{tabular}
+\end{tabular}
+\hfill%
+\raisebox{\dimexpr-\height+\ht\strutbox}[0pt][0pt]{%
+\begin{tabular}{|ll|}
+\hline
+
+\textbf{Report No \#:} & 0 \\
+\textbf{Report Severity:} & Low \\
+\textbf{Automatic:} & False \\
+
+\hline
+\end{tabular}}
+
+\vspace{15pt}
+
+\begin{sloppypar}
+\noindent\textbf{Summary:}\\
+\VAR{summary}
+\end{sloppypar}
+
+\vspace{10pt}
+
+\noindent
+\raisebox{\dimexpr-\height+\ht\strutbox}[0pt][0pt]{%
+\begin{tabular}{@{}l@{}l}
+	Avg. Interest: & \VAR{average_interest} \\
+	Avg. Suspiciousness: & \VAR{average_suspiciousness} \\
+	Avg. Threat Level: & \VAR{average_threat}
+\end{tabular}}
+\vspace{15pt}
+% Reset counter before table
+\setcounter{linenum}{0}
+
+% Invoice table with SKU column
+\begin{longtable}{r l p{3.5in} l{0.1in} r r r}
+\multicolumn{7}{c}{\textbf{Events of preceding 24 hrs}}\\
+\textbf{\#} & \textbf{Cam} & \textbf{Description} & & \textbf{ThreatLvL} & \textbf{Suspicion} & \textbf{Interest}\\
+\hline
+
+\BLOCK{ for event in events }
+	\lineitem{\VAR{event.event.camera}} {\VAR{event.inferreddata.description}}{\VAR{event.inferreddata.threat_level}}{\VAR{event.inferreddata.suspiciousness}}{\VAR{event.inferreddata.interest}}
+\BLOCK{ endfor }
+
+\hline
+\end{longtable}
+\center LaTeX template Provided by U.S. Graphics Company
+\end{document}
+

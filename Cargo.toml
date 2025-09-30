@@ -1,0 +1,13 @@
+[package]
+name = "frigateReportGenerator"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = { version = "0.12", features = ["blocking"] }
+tokio = { version = "1.47", features = ["full"] }
+ollama-rs = { version = "0.3.2" }
+serde = { version = "1.0.228" }
+serde_json = { version = "1.0.145" }
+chrono = { version = "0.4.42" }
+minijinja = { version = "2.12.0", features = ["custom_syntax"]}
