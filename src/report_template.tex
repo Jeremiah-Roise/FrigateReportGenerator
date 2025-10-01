@@ -1,9 +1,9 @@
 
 \documentclass{article}
 \usepackage[letterpaper]{geometry}
-\marginsize{0.7in}{0.7in}{-0.3in}{0.25in}
 \usepackage{longtable}
 \usepackage{xcolor}
+\usepackage{anysize}
 \renewcommand{\familydefault}{\ttdefault}
 
 \newcounter{linenum}
@@ -14,6 +14,7 @@
 }
 
 \begin{document}
+\marginsize{0.7in}{0.7in}{-0.3in}{0.25in}
 % Header
 \noindent
 \begin{tabular}[t]{@{}l@{}}
@@ -60,7 +61,7 @@ Admin: & JeremiahRoise@outlook.com\\
 \setcounter{linenum}{0}
 
 % Invoice table with SKU column
-\begin{longtable}{r l p{3.5in} l{0.1in} r r r}
+\begin{longtable}{r l p{3.5in} p{0.1in} r r r}
 \multicolumn{7}{c}{\textbf{Events of preceding 24 hrs}}\\
 \textbf{\#} & \textbf{Cam} & \textbf{Description} & & \textbf{ThreatLvL} & \textbf{Suspicion} & \textbf{Interest}\\
 \hline
