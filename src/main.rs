@@ -1,21 +1,12 @@
-use minijinja::{ Environment, context, syntax::SyntaxConfig, };
-use ollama_rs::generation::completion::request::GenerationRequest;
-use ollama_rs::generation::completion::GenerationResponse;
-use ollama_rs::models::ModelOptions;
+use chrono::{Datelike, Local};
+use minijinja::{Environment, context, syntax::SyntaxConfig};
+use ollama_rs::{Ollama, generation::completion::GenerationResponse, generation::completion::request::GenerationRequest};
 use reqwest::blocking as reqwest;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tokio::sync::futures;
-use std::fs::File;
-use std::io;
-use std::io::prelude::*;
-use std::path::Path;
-use std::thread::current;
 use std::time::{SystemTime, UNIX_EPOCH};
-use chrono::{Datelike, Local};
-use ollama_rs::Ollama;
-use tokio::runtime::Handle;
-use tokio::task;
+use std::{path::Path, collections::HashMap, fs::File, io, io::prelude::*, process::exit};
+use config::Config;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Event {
@@ -81,6 +72,26 @@ impl Event {
 }
 
 fn main() {
+    let mut frigate_url = "";
+    let settings = Config::builder()
+        // Add in `./Settings.toml`
+        .add_source(config::File::with_name("./Settings"))
+        // Add in settings from the environment (with a prefix of APP)
+        // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
+        .add_source(config::Environment::with_prefix("APP"))
+        .build()
+        .unwrap();
+
+    // Print out our settings (as a HashMap)
+    let deserialized_settings = settings.try_deserialize::<HashMap<String, String>>().unwrap();
+    println!( "{:?}", &deserialized_settings);
+    if !deserialized_settings.contains_key("frigate_url") {
+        frigate_url = deserialized_settings.get("frigate_url").unwrap()
+    }
+    else {
+        exit(1)
+    }
+
     // let _ = delete_file("EventDescriptions.txt");
     let client = reqwest::Client::builder()
         .danger_accept_invalid_certs(true)
@@ -93,8 +104,10 @@ fn main() {
         .as_secs()
         - (24 * 60 * 60);
     let body = client
-        .get(format!(
-            "https://cam.home.com/api/events?after={}&limit=1000",
+        .get(
+            format!(
+            "https://{}/api/events?after={}&limit=1000",
+            frigate_url,
             aftertimestamp
         ))
         .send()
@@ -152,11 +165,15 @@ fn generate_latex(events: Vec<CombinedEventData>) -> io::Result<()> {
     let average_suspiciousness = total_suspiciousness / number_of_events;
     let average_threat = total_threat / number_of_events;
 
-
-    let critical_events: Vec<CombinedEventData> = events.clone().into_iter().filter(
-        |event| event.inferreddata.threat_level > (average_threat * 2.0) ||
-        event.inferreddata.suspiciousness > (average_suspiciousness * 2.0) ||
-        event.inferreddata.interest > (average_interest * 2.0)).collect();
+    let critical_events: Vec<CombinedEventData> = events
+        .clone()
+        .into_iter()
+        .filter(|event| {
+            event.inferreddata.threat_level > (average_threat * 2.0)
+                || event.inferreddata.suspiciousness > (average_suspiciousness * 2.0)
+                || event.inferreddata.interest > (average_interest * 2.0)
+        })
+        .collect();
 
     let ollama = Ollama::default();
     let mut todays_history = String::new();
@@ -168,10 +185,10 @@ fn generate_latex(events: Vec<CombinedEventData>) -> io::Result<()> {
         let request = GenerationRequest::new("deepseek-r1:32b".to_string(), format!("Summarize the data contained in these events gathered from a security camera system. {}", todays_history).to_string());
         ollama.generate(request).await
     };
-    let rt  = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().unwrap();
     let val: GenerationResponse = rt.block_on(futureval).unwrap();
     let summary = val.response.split("</think>").last();
-    
+
     //println!("{:#?}", val);
 
     let timenow = Local::now();
@@ -180,23 +197,16 @@ fn generate_latex(events: Vec<CombinedEventData>) -> io::Result<()> {
         .create(true) // Create if it doesn't exist
         .open("latex_report_test.tex")?;
     let context = context!(
-        year => timenow.year(),
-        month => timenow.month(),
-        day => timenow.day(),
-        average_interest => average_interest,
-        average_suspiciousness => average_suspiciousness,
-        average_threat => average_threat,
-        summary => summary,
-        events => critical_events
-        );
+    year => timenow.year(),
+    month => timenow.month(),
+    day => timenow.day(),
+    average_interest => average_interest,
+    average_suspiciousness => average_suspiciousness,
+    average_threat => average_threat,
+    summary => summary,
+    events => critical_events
+    );
 
-    writeln!( file, "{}", tmpl.render(context).unwrap())?; // Write the content with a newline
-    Ok(())
-}
-
-// Deletes a file. Returns an io::Result<(), io::Error> to indicate success or failure.
-fn delete_file(filepath: &str) -> io::Result<()> {
-    let path = Path::new(filepath);
-    std::fs::remove_file(path)?;
+    writeln!(file, "{}", tmpl.render(context).unwrap())?; // Write the content with a newline
     Ok(())
 }
