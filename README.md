@@ -6,6 +6,11 @@ A tool that generates PDF reports based on AI detections from your security came
 - **Integration with Frigate NVR**: Leverages local AI object detection capabilities to analyze footage and generate detailed reports [1].  
 - **PDF Reports**: Creates comprehensive PDF documents summarizing detected objects and actions.  
 
+### Planned Features
+- [ ] Automatic Timed and requested report generation.
+- [ ] Built in pdf rendering (currently requires manual running.)
+- [ ] Web page with report history and manual generation controls.
+
 ## Installation
 1. Clone the project.
 2. Edit Settings.toml and insert the url for your frigate instance
