@@ -8,7 +8,7 @@ A tool that generates PDF reports based on AI detections from your security came
 
 ### Planned Features
 - [ ] Automatic Timed and requested report generation.
-- [ ] Built in pdf rendering (currently requires manual running.)
+- [x] Built in pdf rendering (currently requires manual running.)
 - [ ] Web page with report history and manual generation controls.
 
 ## Installation
